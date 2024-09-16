@@ -1,4 +1,3 @@
-// In-Memory data model for my-todo-app
 let todoIdCounter = 0;
 const todos = [];
 const categories = new Set();
@@ -48,7 +47,7 @@ export function deleteTodo(id) {
   if (index !== -1) {
     const category = todos[index].category;
     todos.splice(index, 1);
-    if (todos.filter(todo => todo.category == category).length == 0) {
+    if (todos.filter(todo => todo.category === category).length === 0) {
       categories.delete(category);
     }
   }
@@ -63,6 +62,20 @@ export function deleteCategory(category) {
   });
 }
 
+export function clearCompletedTasks() {
+  const completedTasks = todos.filter(todo => todo.status === 'completed');
+  completedTasks.forEach(task => {
+    const index = todos.findIndex(todo => todo.id === task.id);
+    if (index !== -1) {
+      const category = todos[index].category;
+      todos.splice(index, 1);
+      if (todos.filter(todo => todo.category === category).length === 0) {
+        categories.delete(category);
+      }
+    }
+  });
+}
+
 export function addNewCategory(category) {
   categories.add(category);
 }
@@ -70,3 +83,6 @@ export function addNewCategory(category) {
 export const getTodos = () => todos;
 
 export const getCategories = () => Array.from(categories);
+
+// Function to get the current number of pending tasks
+export const getTodoCount = () => todos.filter(todo => todo.status !== 'completed').length;

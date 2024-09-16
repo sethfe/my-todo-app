@@ -1,7 +1,10 @@
 <script lang="js">
   import { LightSwitch } from "@skeletonlabs/skeleton";
-  import { getTodos, addNewTodo, editTodo, completeTodo, deleteTodo, getCategories, addNewCategory } from '$lib/index.js';
+  import { getTodos, addNewTodo, editTodo, completeTodo, deleteTodo, getCategories, addNewCategory, getTodoCount, clearCompletedTasks } from '$lib/index.js';
   import { onMount } from 'svelte';
+  import { writable } from 'svelte/store';
+
+  const taskCount = writable(0);
 
   let todos = [];
   let categories = [];
@@ -18,6 +21,7 @@
   onMount(() => {
     todos = getTodos();
     categories = getCategories();
+    taskCount.set(getTodoCount());
   });
 
   function createTodo() {
@@ -26,9 +30,10 @@
     todoCategory = '';
     todoDueDate = '';
     todos = getTodos();
+    taskCount.set(getTodoCount());
   }
 
-    function startEditing(todo) {
+  function startEditing(todo) {
     isEditing = true;
     editingTodo = todo;
     editedName = todo.name;
@@ -40,6 +45,7 @@
     if (editingTodo) {
       editTodo(editingTodo.id, editedName, editedCategory, new Date(editedDueDate));
       todos = getTodos();
+      taskCount.set(getTodoCount());
       cancelEditing();
     }
   }
@@ -55,33 +61,44 @@
   function completeTask(id) {
     completeTodo(id);
     todos = getTodos();
+    taskCount.set(getTodoCount());
   }
 
   function removeTask(id) {
     deleteTodo(id);
     todos = getTodos();
+    taskCount.set(getTodoCount());
   }
 
   function createCategory(categoryName) {
     addNewCategory(categoryName);
     categories = getCategories();
   }
+
+  function clearCompleted() {
+    clearCompletedTasks();
+    todos = getTodos();
+    taskCount.set(getTodoCount());
+  }
 </script>
 
 <!-- HTML -->
 <main class="container mx-auto p-4">
-<div class="flex justify-between items-center">
-  <h1 class="text-5xl text-tertiary-500 font-bold mb-2">Task Ninja</h1>
-  <LightSwitch />
-</div>
+  <div class="flex justify-between items-center">
+    <h1 class="text-5xl text-tertiary-500 font-bold mb-2">Task Ninja</h1>
+    <LightSwitch />
+  </div>
   <p class="mb-4 text-md italic pl-1">Master Your Tasks with Stealth and Precision!</p>
   
+  <!-- Task Counter -->
+  <p class="mb-4 text-md pl-1">Total Pending Tasks: {$taskCount}</p>
+  
   <!-- Add Todo -->
-  <div class=" mt-8 mb-4">
-	<h2 class="text-2xl text-tertiary-400 font-bold mb-2">Unleash Your Inner Task Ninja</h2>
+  <div class="mt-8 mb-4">
+    <h2 class="text-2xl text-tertiary-400 font-bold mb-2">Unleash Your Inner Task Ninja</h2>
     <input type="text" bind:value={todoName} placeholder="Todo name" class="input input-bordered text-slate-200 w-full mb-2">
     <input type="text" bind:value={todoCategory} placeholder="Category" class="input input-bordered text-slate-200 w-full mb-2">
-    <input type="date" bind:value={todoDueDate} class="input input-bordered text-slate-200 w-full mb-2 ">
+    <input type="date" bind:value={todoDueDate} class="input input-bordered text-slate-200 w-full mb-2">
     <button on:click={createTodo} class="btn btn-md variant-filled-tertiary">Add Todo</button>
   </div>
   
@@ -104,21 +121,31 @@
       {#each todos as todo}
         <li class="mb-8">
           <div class="flex justify-between items-center">
-            <div>
+            <div class={todo.status === 'completed' ? 'todo-completed' : ''}>
               <h3 class="text-xl text-cyan-400">{todo.name}</h3>
               <p class="text-md">Due: {new Date(todo.dueDate).toDateString()}</p>
               <p class="text-md">Category: {todo.category}</p>
-              <p class="text-md">Status: {todo.status}</p>
+              <p class="text-md">
+                Status: 
+                <span class={todo.status === 'completed' ? 'status-completed' : 'status-pending'}>
+                  {todo.status}
+                </span>
+              </p>
             </div>
             <div>
               <button on:click={() => startEditing(todo)} class="btn btn-sm variant-soft-warning mr-2">Edit</button>
-              <button on:click={() => completeTask(todo.id)} class="btn btn-sm variant-soft-success mr-2">Complete</button>
+               <button on:click={() => completeTask(todo.id)} class="btn btn-sm variant-soft-success mr-2">Complete</button>
               <button on:click={() => removeTask(todo.id)} class="btn btn-sm variant-soft-error">Remove</button>
             </div>
           </div>
         </li>
       {/each}
     </ul>
+  </div>
+
+  <!-- Clear Completed Tasks Button -->
+  <div>
+    <button on:click={clearCompleted} class="btn btn-md variant-filled-error mt-4">Clear Completed Tasks</button>
   </div>
 
   <!-- Categories -->
@@ -145,5 +172,17 @@
 <style>
   .container {
     max-width: 800px;
+  }
+  
+  .status-pending {
+    color: green;
+  }
+  
+  .status-completed {
+    color: red;
+  }
+  
+  .todo-completed {
+    color: gray;
   }
 </style>
