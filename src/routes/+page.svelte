@@ -84,8 +84,9 @@
 
 <!-- HTML -->
 <main class="container mx-auto p-4">
-  <div class="flex justify-between items-center">
+  <div class="flex  items-center text-tertiary-500">
     <h1 class="text-5xl text-tertiary-500 font-bold mb-2">Task Ninja</h1>
+    <img src="/ninja (1).svg" alt="Ninja Icon" class="inline-block ml-4 align-middle h-12 filter brightness-0 invert" />
     <LightSwitch />
   </div>
   <p class="mb-4 text-md italic pl-1">Master Your Tasks with Stealth and Precision!</p>
