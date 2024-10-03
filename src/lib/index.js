@@ -1,33 +1,37 @@
 let todoIdCounter = 0;
+let categoryIdCounter = 0;
 const todos = [];
-const categories = new Set();
+const categories = [];
 
 class Todo {
-  constructor(name, category, dueDate) {
+  constructor(name, categoryId, dueDate) {
     this.id = ++todoIdCounter;
     this.name = name;
-    this.status = 'pending'; // default status
-    this.category = category;
+    this.status = 'pending';
+    this.categoryId = categoryId;
     this.dueDate = dueDate;
-
-    if (category) {
-      categories.add(category);
-    }
   }
 }
 
-export function addNewTodo(name, category, dueDate) {
-  const newTodo = new Todo(name, category, dueDate);
+class Category {
+  constructor(name) {
+    this.id = ++categoryIdCounter;
+    this.name = name;
+  }
+}
+
+export function addNewTodo(name, categoryId, dueDate) {
+  const newTodo = new Todo(name, categoryId, dueDate);
   todos.push(newTodo);
   return newTodo;
 }
 
-export function editTodo(id, newName, newCategory, newDueDate) {
+export function editTodo(id, newName, newCategoryId, newDueDate) {
   const todo = todos.find(todo => todo.id === id);
   if (todo) {
-    todo.name = newName ? newName : todo.name;
-    todo.category = newCategory ? newCategory : todo.category;
-    todo.dueDate = newDueDate ? newDueDate : todo.dueDate;
+    todo.name = newName || todo.name;
+    todo.categoryId = newCategoryId !== undefined ? newCategoryId : todo.categoryId;
+    todo.dueDate = newDueDate || todo.dueDate;
   }
 }
 
@@ -45,44 +49,53 @@ export function completeTodo(id) {
 export function deleteTodo(id) {
   const index = todos.findIndex(todo => todo.id === id);
   if (index !== -1) {
-    const category = todos[index].category;
     todos.splice(index, 1);
-    if (todos.filter(todo => todo.category === category).length === 0) {
-      categories.delete(category);
-    }
   }
 }
 
-export function deleteCategory(category) {
-  categories.delete(category);
+export function deleteCategory(categoryId) {
+  categories.splice(categories.findIndex(category => category.id === categoryId), 1);
+  
   todos.forEach(todo => {
-    if (todo.category === category) {
-      todo.category = null;
+    if (todo.categoryId === categoryId) {
+      todo.categoryId = null; // Or consider reassigning to a default category
     }
   });
 }
 
 export function clearCompletedTasks() {
-  const completedTasks = todos.filter(todo => todo.status === 'completed');
-  completedTasks.forEach(task => {
-    const index = todos.findIndex(todo => todo.id === task.id);
-    if (index !== -1) {
-      const category = todos[index].category;
-      todos.splice(index, 1);
-      if (todos.filter(todo => todo.category === category).length === 0) {
-        categories.delete(category);
-      }
-    }
+  const completedTaskIds = todos.filter(todo => todo.status === 'completed').map(todo => todo.id);
+  completedTaskIds.forEach(completeTaskId => {
+    deleteTodo(completeTaskId);
   });
 }
 
-export function addNewCategory(category) {
-  categories.add(category);
+export function addNewCategory(name) {
+  if (!categories.find(category => category.name === name)) {
+    const newCategory = new Category(name);
+    categories.push(newCategory);
+    return newCategory;
+  }
+  return null;
 }
 
-export const getTodos = () => todos;
+export function editCategory(categoryId, newName) {
+  const category = categories.find(cat => cat.id === categoryId);
+  if (category) {
+    category.name = newName;
+  }
+}
 
-export const getCategories = () => Array.from(categories);
+export const getTodos = (categoryId = null) => {
+  return categoryId === null 
+    ? todos 
+    : todos.filter(todo => todo.categoryId === categoryId);
+};
 
-// Function to get the current number of pending tasks
+export const getCategories = () => [...categories];
+
 export const getTodoCount = () => todos.filter(todo => todo.status !== 'completed').length;
+
+// Example pre-defined categories
+addNewCategory('Work');
+addNewCategory('Personal');
